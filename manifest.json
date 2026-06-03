@@ -1,0 +1,25 @@
+{
+    "name": "ILOL & Impound Date Calculators",
+    "short_name": "ILOL Calculator",
+    "description": "Calculates ILOL commencement and end dates under RTA 1961 (SA) s47IAA",
+    "start_url": "/ILOLcalc/ILOL_Calculator.html",
+    "scope": "/ILOLcalc/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#ffffff",
+    "theme_color": "#0078d4",
+    "icons": [
+        {
+            "src": "ILOL-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "ILOL.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

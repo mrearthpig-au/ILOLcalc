@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--
+        ILOL Commencement and End Dates - Adding this here for future reference. Details for how to calculate dates come from:
+        Traffic Training - Immediate Loss of Licence - Notice Use and Withdrawl bulletin published 14/8/2025.
+
+        Commencement Date (must be calculated first)
+        There are times where it is necessary to delay the commencement date of an ILOL. The two following examples are where such a delay will be required.
+        - Excessive speed offences detected by speed camera where the driver’s identity is not confirmed.
+        - Drug driving where an immediate disqualification or suspension will leave the recipient unreasonably stranded or member exercises their discretion to delay the commencement date.
+
+        The reason for this delay is to provide the subject an opportunity to contemplate their position and make any necessary enquiries prior to the commencement.
+        Where the commencement is to be delayed for 28 days it is important to remember that they must be afforded 28 whole days to decide what course of action they wish to take. For that reason when 
+        calculating commencement date it is necessary to ignore the issue day (today). This is because today is already in progress and so does not provide a full 24 hours for contemplation. Simply follow the 
+        next steps to calculate commencement date:
+        - Step forward to ‘tomorrow’ by adding 1 day to today (the next day after issue date).
+        - Then add 28 days to that new date.
+
+        All other ILOLs should commence forthwith. Where it is deemed the ‘person would be unreasonably stranded’ the ILOL commencement time can be delayed for 48 hours.
+        If commencing in 48 hours, there is no requirement to provide an extra day as there is no ‘contemplation’ to be considered. In this case the ILOL will simply commence 48 hours after the date AND 
+        time of issue.
+        
+        End Date (calculate after ascertaining commencement date)
+        Despite whether commencement date is day of issue, or 48 hours/28 days after that date, it is necessary to calculate the end date and record on the ILOL as well. Of important note here is that this 
+        calculation must also be in the favour of the subject. This means that the day it commences is actually day one of the disqualification. For ILOLs commencing forthwith, whether issued at 0100 hours or
+        2300 hours that is still day 1 and ‘time served’. For this reason, when adding on the disqualification period, it is necessary to subtract 1 day from the final calculation.
+
+        If it is a 12 month suspension then simply add 1 year to commencement date then subtract 1 day (time served).
+        If a 6 month ILOL, add 6 months to commencement date then subtract 1 day (time served).
+
+        This subtracting 1 day (time served) is not a new concept and has been the case ever since 28 day impounding commenced. In that case you add 28 days then take 1 day off.
+        Where a final calculated end date results in a date that doesn’t exist you go back to the closest existing date.
+    -->
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ILOL & Impound Date Calculators</title>    
+    
+    <!---------- PWA Manifest ---------->
+    <link rel="manifest" href="manifest.json">
+
+    <!---------- Theme ---------->
+    <meta name="theme-color" content="#0078d4">
+
+    <!---------- Icons ---------->
+    <link rel="apple-touch-icon" href="ILOL.png">
+    <link rel="icon" type="image/png" href="ILOL.png">
+
+    <!---------- iOS App Settings ---------->
+    <!-- Just in case SAPol ever move to iOS devices -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ILOL Calculator">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <style>
+        /* ===================== */
+        /*   CSS Variables       */
+        /* ===================== */
+        :root {
+            --blue:        #0078d4;
+            --blue-dark:   #005fa3;
+            --bg-app:      #f9f9f9;
+            --bg-white:    #ffffff;
+            --bg-input:    #f5f9ff;
+            --border:      #ccc;
+            --text-muted:  #666;
+            --row-green:   #eefbee;   /* 3 month end date */
+            --row-yellow:  #fff9e6;   /* 6 month end date */
+            --row-pink:    #fdecec;   /* 12 month end date */
+            --row-blue:    #eaf4ff;   /* Commencement date */   
+            --tab-height:  48px;
+
+            /*
+             * Fluid sizing strategy:
+             * - clamp(MIN, PREFERRED, MAX)
+             * - PREFERRED uses dvh so content fills the Samsung S25 (Currently issued by SAPol) screen exactly,
+             *   then grows naturally on larger screens up to MAX.
+             * - All values tuned so the ILOL tab fits in (Impound tab will always fit as there is less content)
+             */
+
+            /* Cell padding: tight on S25, comfortable on desktop */
+            --cell-pad-v:  clamp(4px,  0.6dvh, 12px);
+            --cell-pad-h:  clamp(8px,  1.5vw,  16px);
+
+            /* Font sizes */
+            --fs-label:    clamp(0.78rem, 1.8dvh, 0.95rem);
+            --fs-cell:     clamp(0.78rem, 1.7dvh, 1rem);
+            --fs-th:       clamp(0.82rem, 1.8dvh, 1rem);
+            --fs-small:    clamp(0.70rem, 1.5dvh, 0.82rem);
+            --fs-credit:   clamp(0.68rem, 1.4dvh, 0.82rem);
+            --fs-tab:      clamp(0.88rem, 2dvh,   1.1rem);
+
+            /* Date input */
+            --input-pad:   clamp(5px, 1dvh, 10px);
+
+            /* Section gaps */
+            --section-mb:  clamp(4px, 0.5dvh, 16px);
+            --section-pad: clamp(5px, 0.8dvh, 12px);
+
+            /* Gap between table cards */
+            --table-mb:    clamp(12px, 1.4dvh, 24px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ===================== */
+        /*   General Layout      */
+        /* ===================== */
+        body {
+            height: 100dvh;
+            overflow: hidden;         /* Stops body scroll and app fills screen */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            font-family: Calibri, Arial, sans-serif;
+            background-color: var(--bg-app);
+        }
+
+        .app-container {
+            height: 100dvh;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-white);
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* ===================== */
+        /*   Tabs                */
+        /* ===================== */
+        .tabs {
+            flex-shrink: 0;
+            height: var(--tab-height);
+            display: flex;
+            border-bottom: 2px solid var(--border);
+            background: var(--bg-app);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .tabs button {
+            border: none;
+            padding: 0 6px;
+            cursor: pointer;
+            font-size: var(--fs-tab);
+            font-weight: bold;
+            flex: 1;
+            background: #f2f2f2;
+            height: 100%;
+        }
+
+        .tabs button.active {
+            background: var(--bg-white);
+            border-bottom: 4px solid var(--blue);
+            color: var(--blue);
+        }
+
+        /* ===================== */
+        /*   Tab Content         */
+        /* ===================== */
+
+        /*
+         * Each tab fills the remaining screen height under the tab bar.
+         * Content is distributed with flex so rows fill the space evenly.
+         * Scrollable so content isn't squished on small screens (unlikely to be an issue on any future issued SAPol devices, but here just in case)
+         */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            height: calc(100dvh - var(--tab-height));
+            padding: var(--section-pad) var(--section-pad) var(--section-pad);
+            gap: var(--section-mb);
+            overflow-y: auto;
+        }
+
+        /* ============================== */
+        /*   Date Section                 */
+        /* ============================== */
+        .date-section {
+            flex-shrink: 0;
+            border: 2px solid var(--blue);
+            border-radius: 8px;
+            padding: var(--section-pad) 12px;
+            background-color: var(--bg-input);
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        label {
+            font-weight: bold;
+            font-size: var(--fs-label);
+            display: block;
+        }
+
+        small {
+            display: block;
+            color: var(--text-muted);
+            font-size: var(--fs-small);
+        }
+
+        input[type="date"] {
+            width: 100%;
+            padding: var(--input-pad) 8px;
+            border: 2px solid var(--blue);
+            border-radius: 4px;
+            background-color: var(--bg-white);
+            font-weight: bold;
+            font-size: var(--fs-label);
+        }
+
+        input[type="date"]:focus {
+            outline: none;
+            border-color: var(--blue-dark);
+        }
+
+        /* ===================== */
+        /*   Compact Tables      */
+        /* ===================== */
+
+        .compact-tables {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: var(--table-mb);      /* Space between each table */
+        }
+
+        /* Force standard table layout - overrides the global table rules */
+        .compact-tables table,
+        .impound-result table {
+            flex: none;
+            display: table;
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-white);
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .compact-tables thead,
+        .impound-result thead {
+            display: table-header-group;
+        }
+
+        .compact-tables tbody,
+        .impound-result tbody {
+            display: table-row-group;
+        }
+
+        .compact-tables tr,
+        .impound-result tr {
+            display: table-row;
+            flex: none;
+        }
+
+        .compact-tables th,
+        .compact-tables td,
+        .impound-result th,
+        .impound-result td {
+            display: table-cell;
+            padding: var(--cell-pad-v) var(--cell-pad-h);
+            border-bottom: 1px solid #ddd;
+            font-size: var(--fs-cell);
+            line-height: 1.1;
+        }
+
+        /* Value column - left aligned in compact mode */
+        .compact-tables td:last-child,
+        .impound-result td:last-child {
+            text-align: left;
+        }
+
+        /* ===================== */
+        /*   Tables              */
+        /* ===================== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-white);
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex: 1;              
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        thead, tbody {
+            display: contents;
+        }
+
+        tr {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        thead tr {
+            flex: 0 0 auto;
+        }
+
+        th, td {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: var(--cell-pad-v) var(--cell-pad-h);
+            border-bottom: 1px solid #ddd;
+            font-size: var(--fs-cell);
+            line-height: 1.1;
+            overflow: hidden;
+        }
+
+        /* Second column (values) right-aligned, no bold */
+        td:last-child {
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        th {
+            background-color: #e3e8ee;
+            font-weight: 700;
+            font-size: var(--fs-th);
+        }
+
+        /* Rounded top corners on header rows */
+        th:first-child {
+            border-top-left-radius: 10px;
+        }
+        th:last-child {
+            border-top-right-radius: 10px;
+        }
+
+        /* Rounded bottom corners */
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 10px;
+        }
+
+        tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 10px;
+        }
+
+        /* Alternating rows */
+        tbody tr:nth-child(even):not(.three-month-row):not(.six-month-row):not(.twelve-month-row):not(.commencement-row) {
+            background-color: #fafafa;
+        }
+
+        /* ===================== */
+        /*   Row Colours         */
+        /* ===================== */
+        .commencement-row td {
+            background-color: var(--row-blue);
+            font-weight: bold;   /* Only the Commencement Date row is bold */
+        }
+
+        .three-month-row td {
+            background-color: var(--row-green);
+        }
+
+        .six-month-row td {
+            background-color: var(--row-yellow);
+        }
+
+        .twelve-month-row td {
+            background-color: var(--row-pink);
+        }
+
+        /* ===================== */
+        /*   Impound result      */
+        /* ===================== */
+
+        .impound-result {
+            flex-shrink: 0;
+        }
+
+        /* ===================== */
+        /*   Credit label        */
+        /* ===================== */
+        .credit {
+            flex-shrink: 0;
+            font-style: italic;
+            color: var(--text-muted);
+            text-align: center;
+            font-size: var(--fs-credit);
+        }
+
+        /* ===================== */
+        /*   Desktop overrides   */
+        /* ===================== */
+        @media (min-width: 600px) {
+            body {
+                height: auto;
+                min-height: 100dvh;
+                overflow-y: auto;
+            }
+
+            .app-container {
+                height: auto;
+                min-height: 100dvh;
+            }
+
+            .tab-content.active {
+                height: auto;
+                overflow: visible;
+            }
+        }
+
+    </style>
+</head>
+
+
+
+<body>
+
+<!----------------------------------->
+<!---------- App Container ---------->
+<!----------------------------------->
+<div class="app-container">
+
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab(event, 'ilol')">ILOL Calculator</button>
+        <button class="tab-button" onclick="openTab(event, 'impound')">Impound Calculator</button>
+    </div>
+
+    <!------------------------------------->
+    <!---------- ILOL Calculator ---------->
+    <!------------------------------------->
+    <div id="ilol" class="tab-content active">
+
+        <div class="date-section">
+            <label for="date-picker">Select an issue date:</label>
+            <small>Tap to choose the original issue date</small>
+            <input type="date" id="date-picker" onchange="insertDate()">
+        </div>
+
+        <!---------- Result Tables ---------->
+        <div class="compact-tables">
+
+            <table>
+                <thead>
+                    <tr><th colspan="2">Effective Forthwith</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Issue Date</td><td id="selected-date">-</td></tr>
+                    <tr class="commencement-row"><td>Commencement Date</td><td id="commencement-date">-</td></tr>
+                    <tr class="three-month-row"><td>3 Month End Date</td><td id="3-month-end-date">-</td></tr>
+                    <tr class="six-month-row"><td>6 Month End Date</td><td id="6-month-end-date">-</td></tr>
+                    <tr class="twelve-month-row"><td>12 Month End Date</td><td id="12-month-end-date">-</td></tr>
+                </tbody>
+            </table>
+
+            <table>
+                <thead>
+                    <tr><th colspan="2">Commence in 48 hours</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Issue Date</td><td id="selected-date-48hours">-</td></tr>
+                    <tr class="commencement-row"><td>Commencement Date</td><td id="commencement-date-48hours">-</td></tr>
+                    <tr class="three-month-row"><td>3 Month End Date</td><td id="3-month-end-date-48hours">-</td></tr>
+                    <tr class="six-month-row"><td>6 Month End Date</td><td id="6-month-end-date-48hours">-</td></tr>
+                    <tr class="twelve-month-row"><td>12 Month End Date</td><td id="12-month-end-date-48hours">-</td></tr>
+                </tbody>
+            </table>
+
+            <table>
+                <thead>
+                    <tr><th colspan="2">Commence in 28 days</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Issue Date</td><td id="selected-date-28days">-</td></tr>
+                    <tr class="commencement-row"><td>Commencement Date</td><td id="commencement-date-28days">-</td></tr>
+                    <tr class="three-month-row"><td>3 Month End Date</td><td id="3-month-end-date-28days">-</td></tr>
+                    <tr class="six-month-row"><td>6 Month End Date</td><td id="6-month-end-date-28days">-</td></tr>
+                    <tr class="twelve-month-row"><td>12 Month End Date</td><td id="12-month-end-date-28days">-</td></tr>
+                </tbody>
+            </table>
+
+        </div>
+
+        <p class="credit">Coding Credit - Jason Crocker</p>
+
+    </div>
+
+    <!---------------------------------------->
+    <!---------- Impound Calculator ---------->   
+    <!----------------------------------------> 
+    <div id="impound" class="tab-content">
+
+        <div class="date-section">
+            <label for="impound-date">Select an impound date:</label>
+            <input type="date" id="impound-date" onchange="calculateImpound()">
+        </div>
+
+        <!---------- Result Table ---------->
+        <div class="impound-result">
+            <table>
+                <thead>
+                    <tr><th colspan="2">Impound End Date</th></tr>
+                </thead>
+                <tbody>
+                    <tr class="commencement-row">
+                        <td>End of 28 Days</td>
+                        <td id="impound-end">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="credit">Coding Credit - Jason Crocker</p>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+// =============================================================
+// ILOL & Impound Calculator
+// -------------------------------------------------------------
+// Purpose:
+// Calculates licence disqualification and impound end dates
+// based on:
+// - Road Traffic Act 1961 (SA) s45B, s45D, s47IAA
+// - Criminal Law Consolidation Act 1935 (SA) s19AE, s19AF
+// - Criminal Law (Clamping, Impounding and Forefeiture of Vehicles) Act 2007
+// =============================================================
+
+// =============================================================
+// ===================== Safe Date Helpers =====================
+// =============================================================
+
+// Always create dates at midday (avoids DST + timezone issues)
+// Prevents:
+// - DST rollover issues
+// - Midnight timezone shifts
+// - "previous day" bugs behind Prisma
+
+function makeDate(y, m, d) {
+    return new Date(y, m, d, 12);
+}
+
+// Add whole days to a date object safely
+function addDays(date, n) {
+    var d = new Date(date.getTime());
+    d.setDate(d.getDate() + n);
+    d.setHours(12, 0, 0, 0);
+    return d;
+}
+
+// Add months safely without JS overflow errors
+// Ensures:
+// - Jan 31 -> Feb 28/29 (not March)
+// - Works for all month lengths plus leap years
+
+function addMonthsSafe(y, m, d, monthsToAdd) {
+    const target = new Date(y, m + monthsToAdd, 1, 12);
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    return new Date(
+        target.getFullYear(),
+        target.getMonth(),
+        Math.min(d, lastDay),
+        12
+    );
+}
+
+
+// =================================================================
+// ===================== Tab Navigation System =====================
+// =================================================================
+
+function openTab(evt, tabId) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    evt.currentTarget.classList.add('active');
+}
+
+
+// ================================================================
+// ===================== ILOL Main Calculator =====================
+// ================================================================
+
+function insertDate() {
+    var dateString = document.getElementById("date-picker").value;
+
+    // If date is cleared (native X button), reset all output cells
+    if (!dateString) { clearILOL(); return; }
+
+    // Split the YYYY-MM-DD string to treat the date like a paper calendar without inserting UTC midnight
+    var parts = dateString.split('-');
+    var year  = parseInt(parts[0], 10);
+    var month = parseInt(parts[1], 10) - 1;
+    var day   = parseInt(parts[2], 10);
+
+    var selectedDate = makeDate(year, month, day);
+    if (isNaN(selectedDate.getTime())) return;
+
+    var f = selectedDate.toLocaleDateString("en-GB");
+
+
+
+    //+++++ Calculate end dates FORTHWITH +++++
+    document.getElementById("selected-date").textContent = f;
+    document.getElementById("commencement-date").textContent = f;
+
+    // ----- Duration calculations (3 / 6 / 12 months) -----
+    let d3 = addMonthsSafe(year, month, day, 3);
+    d3 = addDays(d3, -1);
+
+    let d6 = addMonthsSafe(year, month, day, 6);
+    d6 = addDays(d6, -1);
+
+    let d12 = addMonthsSafe(year, month, day, 12);
+    d12 = addDays(d12, -1);
+
+    document.getElementById("3-month-end-date").textContent  = d3.toLocaleDateString("en-GB");
+    document.getElementById("6-month-end-date").textContent  = d6.toLocaleDateString("en-GB");
+    document.getElementById("12-month-end-date").textContent = d12.toLocaleDateString("en-GB");
+
+
+
+    //+++++ Calculate end dates 48 HOURS +++++
+    document.getElementById("selected-date-48hours").textContent = f;
+
+    var c48 = addDays(selectedDate, 2);
+    document.getElementById("commencement-date-48hours").textContent = c48.toLocaleDateString("en-GB");
+
+    // ----- Duration calculations (3 / 6 / 12 months) -----   
+    let c48_3 = addMonthsSafe(c48.getFullYear(), c48.getMonth(), c48.getDate(), 3);
+    c48_3 = addDays(c48_3, -1);
+
+    let c48_6 = addMonthsSafe(c48.getFullYear(), c48.getMonth(), c48.getDate(), 6);
+    c48_6 = addDays(c48_6, -1);
+
+    let c48_12 = addMonthsSafe(c48.getFullYear(), c48.getMonth(), c48.getDate(), 12);
+    c48_12 = addDays(c48_12, -1);
+
+    document.getElementById("3-month-end-date-48hours").textContent  = c48_3.toLocaleDateString("en-GB");
+    document.getElementById("6-month-end-date-48hours").textContent  = c48_6.toLocaleDateString("en-GB");
+    document.getElementById("12-month-end-date-48hours").textContent = c48_12.toLocaleDateString("en-GB");
+
+
+
+    //+++++ Calculate end dates 28 DAYS +++++
+    document.getElementById("selected-date-28days").textContent = f;
+
+    var c28 = addDays(selectedDate, 29);
+    document.getElementById("commencement-date-28days").textContent = c28.toLocaleDateString("en-GB");
+
+    // ----- Duration calculations (3 / 6 / 12 months) -----   
+    let c28_3 = addMonthsSafe(c28.getFullYear(), c28.getMonth(), c28.getDate(), 3);
+    c28_3 = addDays(c28_3, -1);
+
+    let c28_6 = addMonthsSafe(c28.getFullYear(), c28.getMonth(), c28.getDate(), 6);
+    c28_6 = addDays(c28_6, -1);
+
+    let c28_12 = addMonthsSafe(c28.getFullYear(), c28.getMonth(), c28.getDate(), 12);
+    c28_12 = addDays(c28_12, -1);
+
+    document.getElementById("3-month-end-date-28days").textContent  = c28_3.toLocaleDateString("en-GB");
+    document.getElementById("6-month-end-date-28days").textContent  = c28_6.toLocaleDateString("en-GB");
+    document.getElementById("12-month-end-date-28days").textContent = c28_12.toLocaleDateString("en-GB");
+}
+
+
+// ==============================================================
+// ===================== Impound Calculator =====================
+// ==============================================================
+
+function calculateImpound() {
+    var dateString = document.getElementById("impound-date").value;
+
+    // If date is cleared (native X button), reset the result cell
+    if (!dateString) { clearImpound(); return; }
+
+    // Parse YYYY-MM-DD manually to avoid UTC midnight / timezone issues
+    var parts = dateString.split('-');
+    var year  = parseInt(parts[0], 10);
+    var month = parseInt(parts[1], 10) - 1;
+    var day   = parseInt(parts[2], 10);
+
+    var d = makeDate(year, month, day);
+    if (isNaN(d.getTime())) return;
+
+    // Day 1 = day of impound -> +27 gives final day
+    var end = addDays(d, 27);
+    document.getElementById("impound-end").textContent = end.toLocaleDateString("en-GB");
+}
+
+// ==============================================================
+// ===================== Clear Functions ========================
+// ==============================================================
+
+// Resets all ILOL output cells
+function clearILOL() {
+    document.getElementById("date-picker").value = "";
+    var ids = [
+        "selected-date", "commencement-date",
+        "3-month-end-date", "6-month-end-date", "12-month-end-date",
+        "selected-date-48hours", "commencement-date-48hours",
+        "3-month-end-date-48hours", "6-month-end-date-48hours", "12-month-end-date-48hours",
+        "selected-date-28days", "commencement-date-28days",
+        "3-month-end-date-28days", "6-month-end-date-28days", "12-month-end-date-28days"
+    ];
+    ids.forEach(function(id) {
+        document.getElementById(id).textContent = "-";
+    });
+}
+
+// Resets the impound result cell
+function clearImpound() {
+    document.getElementById("impound-date").value = "";
+    document.getElementById("impound-end").textContent = "-";
+}
+
+// ==========================================================
+// ===================== Service Worker =====================
+// ==========================================================
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
+    });
+}
+
+</script>
+</body>
+</html>
